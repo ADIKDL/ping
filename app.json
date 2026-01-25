@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Ping",
+    "slug": "ping-private-messenger",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.ping"
+    },
+    "android": {
+      "package": "com.example.ping",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a"
+      }
+    },
+    "plugins": ["expo-notifications", "expo-image-picker", "expo-camera"],
+    "extra": {}
+  }
+}

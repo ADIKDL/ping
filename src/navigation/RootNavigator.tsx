@@ -1,4 +1,6 @@
+import { Platform } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createStackNavigator } from "@react-navigation/stack";
 import { useAuthStore } from "@/store/useAuthStore";
 import { SplashScreen } from "@/screens/SplashScreen";
 import { LoginScreen } from "@/screens/LoginScreen";
@@ -16,39 +18,59 @@ export type RootStackParamList = {
   EditProfile: undefined;
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const NativeStack = createNativeStackNavigator<RootStackParamList>();
+const WebStack = createStackNavigator<RootStackParamList>();
 
-export function RootNavigator() {
+function NativeRootStack() {
   const { user, profile, authLoading } = useAuthStore();
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {authLoading && <Stack.Screen name="Splash" component={SplashScreen} />}
-      {!authLoading && !user && <Stack.Screen name="Login" component={LoginScreen} />}
+    <NativeStack.Navigator screenOptions={{ headerShown: false }}>
+      {authLoading && <NativeStack.Screen name="Splash" component={SplashScreen} />}
+      {!authLoading && !user && <NativeStack.Screen name="Login" component={LoginScreen} />}
       {!authLoading && user && !profile && (
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        <NativeStack.Screen name="Onboarding" component={OnboardingScreen} />
       )}
       {!authLoading && user && profile && (
         <>
-          <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen
+          <NativeStack.Screen name="Main" component={MainTabs} />
+          <NativeStack.Screen
             name="Chat"
             component={ChatScreen}
-            options={{
-              headerShown: false,
-              animation: "slide_from_right"
-            }}
+            options={{ headerShown: false, animation: "slide_from_right" }}
           />
-          <Stack.Screen
+          <NativeStack.Screen
             name="EditProfile"
             component={EditProfileScreen}
-            options={{
-              headerShown: false,
-              animation: "slide_from_right"
-            }}
+            options={{ headerShown: false, animation: "slide_from_right" }}
           />
         </>
       )}
-    </Stack.Navigator>
+    </NativeStack.Navigator>
   );
+}
+
+function WebRootStack() {
+  const { user, profile, authLoading } = useAuthStore();
+
+  return (
+    <WebStack.Navigator screenOptions={{ headerShown: false }}>
+      {authLoading && <WebStack.Screen name="Splash" component={SplashScreen} />}
+      {!authLoading && !user && <WebStack.Screen name="Login" component={LoginScreen} />}
+      {!authLoading && user && !profile && (
+        <WebStack.Screen name="Onboarding" component={OnboardingScreen} />
+      )}
+      {!authLoading && user && profile && (
+        <>
+          <WebStack.Screen name="Main" component={MainTabs} />
+          <WebStack.Screen name="Chat" component={ChatScreen} />
+          <WebStack.Screen name="EditProfile" component={EditProfileScreen} />
+        </>
+      )}
+    </WebStack.Navigator>
+  );
+}
+
+export function RootNavigator() {
+  return Platform.OS === "web" ? <WebRootStack /> : <NativeRootStack />;
 }

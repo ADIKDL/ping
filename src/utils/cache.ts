@@ -15,3 +15,8 @@ export async function getCachedChatMessages<T>(chatId: string): Promise<T | null
     return null;
   }
 }
+
+export async function clearChatCache(chatId: string) {
+  const key = `ping_chat_cache_${chatId}`;
+  await AsyncStorage.removeItem(key);
+}

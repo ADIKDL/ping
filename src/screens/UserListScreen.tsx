@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { listUsers } from "@/services/users";
@@ -41,27 +41,32 @@ export function UserListScreen() {
 
   return (
     <View className="flex-1 bg-sand-50 dark:bg-ink-900">
-      <View className="px-6 pt-16 pb-4">
-        <Text className="text-3xl font-semibold text-ink-900 dark:text-white">Your people</Text>
-        <Text className="mt-2 text-ink-600 dark:text-ink-300">
-          Start a private chat.
-        </Text>
-        <TextInput
-          placeholder="Search username"
-          placeholderTextColor="#7e94ae"
-          value={query}
-          onChangeText={setQuery}
-          className="mt-5 rounded-2xl bg-white dark:bg-ink-800 px-4 py-3 text-ink-900 dark:text-white"
-        />
-        <TouchableOpacity onPress={loadUsers} className="mt-4 self-start rounded-full bg-ink-200 dark:bg-ink-800 px-4 py-2">
-          <Text className="text-ink-700 dark:text-ink-200 text-xs">Refresh</Text>
-        </TouchableOpacity>
+      <View className="px-6 pb-4" style={{ paddingTop: Platform.OS === "web" ? 32 : 64 }}>
+        <View className="w-full" style={{ maxWidth: 880, alignSelf: "center" }}>
+          <Text className="text-3xl font-semibold text-ink-900 dark:text-white">Your people</Text>
+          <Text className="mt-2 text-ink-600 dark:text-ink-300">
+            Start a private chat.
+          </Text>
+          <TextInput
+            placeholder="Search username"
+            placeholderTextColor="#7e94ae"
+            value={query}
+            onChangeText={setQuery}
+            className="mt-5 rounded-2xl bg-white dark:bg-ink-800 px-4 py-3 text-ink-900 dark:text-white"
+          />
+          <TouchableOpacity
+            onPress={loadUsers}
+            className="mt-4 self-start rounded-full bg-ink-200 dark:bg-ink-800 px-4 py-2"
+          >
+            <Text className="text-ink-700 dark:text-ink-200 text-xs">Refresh</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={() => (
-          <View className="px-6 pt-10">
+          <View className="px-6 pt-10" style={{ maxWidth: 880, alignSelf: "center" }}>
             <Text className="text-base text-ink-500 dark:text-ink-300">
               No users found yet.
             </Text>
@@ -70,7 +75,13 @@ export function UserListScreen() {
             </Text>
           </View>
         )}
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 140 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: Platform.OS === "web" ? 32 : 140,
+          maxWidth: 880,
+          alignSelf: "center",
+          width: "100%"
+        }}
         renderItem={({ item }) => <UserRow user={item} onPress={() => handleStartChat(item)} />}
       />
     </View>

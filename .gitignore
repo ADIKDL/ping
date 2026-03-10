@@ -8,3 +8,12 @@ web-build/
 *.tsbuildinfo
 coverage/
 __tests__/__snapshots__/
+
+.idea/ 
+.claude/ 
+android/local.properties 
+*.keystore
+*.jks
+android/app/debug.keystore
+.DS_Store
+Thumbs.db

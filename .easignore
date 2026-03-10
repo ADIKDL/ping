@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.log
+*.tsbuildinfo
+coverage/
+__tests__/__snapshots__/

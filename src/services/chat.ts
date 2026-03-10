@@ -59,6 +59,18 @@ export function listenMessages(
   });
 }
 
+export async function deleteChat(chatId: string) {
+  const messagesRef = firestore.collection(`chats/${chatId}/messages`);
+  let snapshot = await messagesRef.limit(450).get();
+  while (!snapshot.empty) {
+    const batch = firestore.batch();
+    snapshot.docs.forEach((docItem) => batch.delete(docItem.ref));
+    await batch.commit();
+    snapshot = await messagesRef.limit(450).get();
+  }
+  await firestore.collection("chats").doc(chatId).delete();
+}
+
 export async function markMessageRead(chatId: string, messageId: string) {
   const msgRef = firestore.collection(`chats/${chatId}/messages`).doc(messageId);
   await msgRef.set({ readAt: Date.now() }, { merge: true });

@@ -23,14 +23,15 @@ import { TypingIndicator } from "@/components/TypingIndicator";
 import { MessageBubble } from "@/components/MessageBubble";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getProfile } from "@/services/users";
-import { listenMessages, markMessageRead, sendMessage } from "@/services/chat";
+import { deleteChat, listenMessages, markMessageRead, sendMessage } from "@/services/chat";
 import { listenToTyping, setTyping } from "@/services/typing";
 import { decryptPayload } from "@/utils/crypto";
 import { uploadMessageImage } from "@/services/storage";
 import { enqueueMessage, getQueue, dequeueMessage, QueuedMessage } from "@/utils/offlineQueue";
 import { MessagePayload } from "@/types/models";
 import { usePresence } from "@/hooks/usePresence";
-import { cacheChatMessages, getCachedChatMessages } from "@/utils/cache";
+import { cacheChatMessages, clearChatCache, getCachedChatMessages } from "@/utils/cache";
+import { playMessageSound } from "@/utils/notificationSound";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -61,9 +62,13 @@ export function ChatScreen() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const listRef = useRef<FlatList>(null);
   const presence = usePresence(peerId);
+  const initialSnapshot = useRef(true);
+  const lastIncomingId = useRef<string | null>(null);
 
   const mediaEnabled = false;
 
@@ -105,9 +110,19 @@ export function ChatScreen() {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setMessages(decrypted);
       cacheChatMessages(chatId, decrypted);
+      if (profile?.id) {
+        const newestIncoming = decrypted.find((msg) => msg.senderId !== profile.id);
+        if (!initialSnapshot.current && newestIncoming && newestIncoming.id !== lastIncomingId.current) {
+          playMessageSound();
+        }
+        if (newestIncoming) {
+          lastIncomingId.current = newestIncoming.id;
+        }
+      }
+      initialSnapshot.current = false;
     });
     return () => unsub();
-  }, [chatId]);
+  }, [chatId, profile?.id]);
 
   useEffect(() => {
     const unsub = listenToTyping(chatId, (ids) => {
@@ -406,6 +421,15 @@ export function ChatScreen() {
             >
               <Text className="text-ink-900 dark:text-ink-100">View profile</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setMenuOpen(false);
+                setDeleteOpen(true);
+              }}
+              className="py-2"
+            >
+              <Text className="text-red-500">Delete chat</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -421,6 +445,43 @@ export function ChatScreen() {
               <Text className="mt-1 text-xs text-ink-500 dark:text-ink-300">
                 {online ? "Online" : lastSeen ? `Last seen ${lastSeen}` : "Offline"}
               </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal transparent visible={deleteOpen} animationType="fade" onRequestClose={() => setDeleteOpen(false)}>
+        <TouchableOpacity onPress={() => setDeleteOpen(false)} className="flex-1 bg-black/50 justify-center">
+          <View className="mx-6 rounded-2xl bg-white dark:bg-ink-800 p-6">
+            <Text className="text-base font-semibold text-ink-900 dark:text-white">Delete this chat?</Text>
+            <Text className="mt-2 text-xs text-ink-500 dark:text-ink-300">
+              This removes the conversation and messages for both participants.
+            </Text>
+            <View className="mt-6 flex-row justify-end">
+              <TouchableOpacity
+                onPress={() => setDeleteOpen(false)}
+                className="mr-3 rounded-full bg-ink-100 dark:bg-ink-700 px-4 py-2"
+                disabled={deleting}
+              >
+                <Text className="text-ink-700 dark:text-ink-200">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  if (deleting) return;
+                  setDeleting(true);
+                  try {
+                    await deleteChat(chatId);
+                    await clearChatCache(chatId);
+                    setDeleteOpen(false);
+                    navigation.goBack();
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                className="rounded-full bg-red-500 px-4 py-2"
+              >
+                <Text className="text-white">Delete</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </TouchableOpacity>

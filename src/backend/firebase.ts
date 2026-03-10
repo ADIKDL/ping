@@ -15,7 +15,25 @@ type ExpoExtra = {
   firebaseDatabaseUrl?: string;
 };
 
-const extra = (Constants.expoConfig?.extra ?? {}) as ExpoExtra;
+type ExpoConstantsWithManifest = typeof Constants & {
+  manifest?: { extra?: ExpoExtra };
+  manifest2?: { extra?: ExpoExtra };
+};
+
+const constants = Constants as ExpoConstantsWithManifest;
+const extra =
+  (Constants.expoConfig?.extra ??
+    constants.manifest2?.extra ??
+    constants.manifest?.extra ??
+    {}) as ExpoExtra;
+
+const firebaseDatabaseUrl = extra.firebaseDatabaseUrl?.trim();
+
+if (!firebaseDatabaseUrl || !firebaseDatabaseUrl.startsWith("https://")) {
+  throw new Error(
+    "Missing Firebase Realtime Database URL. Set EXPO_PUBLIC_FIREBASE_DATABASE_URL for the EAS build."
+  );
+}
 
 export const firebaseConfig = {
   apiKey: extra.firebaseApiKey ?? "YOUR_FIREBASE_API_KEY",
@@ -24,7 +42,7 @@ export const firebaseConfig = {
   storageBucket: extra.firebaseStorageBucket ?? "YOUR_FIREBASE_STORAGE_BUCKET",
   messagingSenderId: extra.firebaseMessagingSenderId ?? "YOUR_MESSAGING_SENDER_ID",
   appId: extra.firebaseAppId ?? "YOUR_FIREBASE_APP_ID",
-  databaseURL: extra.firebaseDatabaseUrl ?? "YOUR_FIREBASE_DATABASE_URL"
+  databaseURL: firebaseDatabaseUrl
 };
 
 const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
